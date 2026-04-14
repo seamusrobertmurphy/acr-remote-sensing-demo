@@ -1,9 +1,3 @@
----
-editor_options: 
-  markdown: 
-    wrap: 100
----
-
 # ACR Remote Sensing Framework Demonstration
 
 A self-contained pilot that walks the new ACR *Framework for Remotely Sensed Quantification of
