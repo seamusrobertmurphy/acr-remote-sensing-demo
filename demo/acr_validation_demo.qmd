@@ -1,0 +1,223 @@
+---
+title: "ACR Remote Sensing Validation Plot Demo"
+subtitle: "Synthetic PNW forest tract, n = 45 validation plots"
+author: "TÜV SÜD America - Forestry Team"
+date: today
+format:
+  html:
+    embed-resources: true
+    toc: true
+    code-fold: show
+    code-tools: true
+execute:
+  warning: false
+  message: false
+editor: 
+  markdown: 
+    wrap: 100
+---
+
+## Background
+
+The American Carbon Registry's *Methodology Framework for Remotely Sensed Quantification of Forest
+Carbon* ([v1.0,
+2026](https://acrcarbon.org/program_resources/framework-for-remotely-sensed-quantification-of-forest-carbon/))
+relies on ground-truth validation plots to calibrate and verify remotely sensed biomass estimates.
+ACR's supporting [R
+script](https://acrcarbon.org/wp-content/uploads/2026/03/ACR-Script-for-Validation-Plot-Location-Generation.r)
+(`ACR-Script-for-Validation-Plot-Location-Generation.r`) draws N random plot centers uniformly
+inside a project polygon, using an equal-area projection (EPSG:6933) to avoid latitude bias when the
+input is in geographic coordinates.
+
+This notebook stands up a reproducible demonstration. No real project data are used. The AOI is a
+synthetic \~5,000 ha forest tract in the Oregon Cascades; n = 45 plots (the ACR minimum); seed =
+`20260414`.
+
+## Setup
+
+```{r setup}
+library(sf)
+library(ggplot2)
+library(dplyr)
+library(readr)
+library(leaflet)
+library(htmlwidgets)
+library(knitr)
+
+set.seed(20260414)
+
+output_dir <- "outputs"
+if (!dir.exists(output_dir)) dir.create(output_dir, recursive = TRUE)
+```
+
+## Synthetic AOI
+
+We derived an irregular, non-convex polygon from a radius with some random edge noise, centered near
+44.5°N, 122.5°W (Willamette National Forest). The polygon is written to both KMZ and SHP for purpose
+of testing the full ACR script.
+
+```{r make-aoi}
+centroid_lon <- -122.5
+centroid_lat <-   44.5
+target_ha    <- 5000
+
+# Approximate radius in degrees for ~5,000 ha at this latitude
+# 1 deg lat ~ 111 km; 1 deg lon ~ 111 km * cos(lat)
+km_per_deg_lat <- 111
+km_per_deg_lon <- 111 * cos(centroid_lat * pi / 180)
+target_radius_km <- sqrt(target_ha / 100 / pi)  # ha -> km^2 -> km radius
+
+n_vert <- 120
+theta  <- seq(0, 2 * pi, length.out = n_vert + 1)[-1]
+radius_km <- target_radius_km *
+  (1 + 0.25 * sin(3 * theta) + 0.12 * cos(5 * theta) +
+       runif(n_vert, -0.06, 0.06))
+
+lon <- centroid_lon + (radius_km * cos(theta)) / km_per_deg_lon
+lat <- centroid_lat + (radius_km * sin(theta)) / km_per_deg_lat
+coords <- rbind(cbind(lon, lat), c(lon[1], lat[1]))
+
+poly_sfc <- st_sfc(st_polygon(list(coords)), crs = 4326)
+aoi <- st_sf(name = "Demo AOI", geometry = poly_sfc) |> st_make_valid()
+
+aoi_area_ha <- as.numeric(st_area(st_transform(aoi, 6933))) / 1e4
+cat(sprintf("AOI area: %.0f ha\n", aoi_area_ha))
+print(st_bbox(aoi))
+
+# Write SHP
+shp_aoi <- file.path("aoi.shp")
+suppressWarnings(st_write(aoi, shp_aoi, delete_layer = TRUE, quiet = TRUE))
+
+# Write KMZ (zip a KML)
+kml_tmp <- tempfile(fileext = ".kml")
+st_write(aoi, kml_tmp, delete_dsn = TRUE, quiet = TRUE)
+kmz_aoi <- "aoi.kmz"
+zip(kmz_aoi, files = kml_tmp, flags = "-j9X")
+```
+
+## Generate validation plot centers
+
+The following block mirrors the published ACR script: read the polygon, transform to EPSG:6933 for
+equal-area sampling, draw `n_points = 45` random points with `sf::st_sample()`, re-project, and
+export CSV / SHP / KML.
+
+```{r sample-plots}
+n_points <- 45
+input_path <- kmz_aoi
+
+read_polygon <- function(path) {
+  ext <- tolower(tools::file_ext(path))
+  if (ext == "shp") return(st_read(path, quiet = TRUE))
+  if (ext == "kmz") {
+    tmpdir <- tempfile("kmz_unzip_"); dir.create(tmpdir)
+    unzip(path, exdir = tmpdir)
+    kml_files <- list.files(tmpdir, pattern = "\\.kml$",
+                            full.names = TRUE, recursive = TRUE)
+    if (length(kml_files) == 0) stop("No .kml found inside the KMZ.")
+    return(st_read(kml_files[1], quiet = TRUE))
+  }
+  stop("Unsupported file type.")
+}
+
+poly <- read_polygon(input_path) |> st_make_valid()
+poly <- poly |>
+  filter(st_geometry_type(geometry) %in% c("POLYGON", "MULTIPOLYGON"))
+if (nrow(poly) > 1) {
+  poly <- st_union(poly) |> st_as_sf()
+  names(poly)[names(poly) == "x"] <- "geometry"
+}
+
+poly_sampling <- if (st_is_longlat(poly)) st_transform(poly, 6933) else poly
+
+pts_geom <- st_sample(poly_sampling, size = n_points,
+                      type = "random", exact = TRUE)
+pts_sf <- st_as_sf(pts_geom) |>
+  mutate(PointID = sprintf("P%02d", dplyr::row_number()))
+pts_out <- st_transform(pts_sf, st_crs(poly))
+
+xy_native <- st_coordinates(pts_out)
+pts_ll    <- st_transform(pts_out, 4326)
+xy_ll     <- st_coordinates(pts_ll)
+
+pts_table <- tibble(
+  PointID = pts_out$PointID,
+  Lon = xy_ll[,1], Lat = xy_ll[,2],
+  X = xy_native[,1], Y = xy_native[,2]
+)
+
+csv_path <- file.path(output_dir, "random_points_45.csv")
+shp_path <- file.path(output_dir, "random_points_45.shp")
+kml_path <- file.path(output_dir, "random_points_45.kml")
+png_path <- file.path(output_dir, "random_points_45_map.png")
+html_path<- file.path(output_dir, "random_points_45_map.html")
+
+write_csv(pts_table, csv_path)
+suppressWarnings(st_write(pts_out, shp_path, delete_layer = TRUE, quiet = TRUE))
+st_write(st_transform(pts_out, 4326), kml_path,
+         delete_dsn = TRUE, quiet = TRUE)
+```
+
+## Static map
+
+```{r static-map, fig.width=8, fig.height=6}
+p <- ggplot() +
+  geom_sf(data = poly, fill = "grey90", color = "grey30", linewidth = 0.6) +
+  geom_sf(data = pts_out, color = "red3", size = 2) +
+  geom_sf_text(data = pts_out, aes(label = PointID),
+               size = 2.5, nudge_y = 0.0015) +
+  labs(
+    title = paste0("ACR Validation Plots (n=", n_points, ")"),
+    subtitle = "Synthetic Oregon Cascades AOI",
+    caption = "Generated in R (sf::st_sample), seed = 20260414"
+  ) +
+  theme_minimal()
+
+ggsave(png_path, p, width = 8, height = 6, dpi = 300)
+p
+```
+
+## Interactive leaflet map
+
+```{r leaflet-map}
+leaf <- leaflet() |>
+  addProviderTiles(providers$Esri.WorldImagery, group = "Imagery") |>
+  addProviderTiles(providers$CartoDB.Positron, group = "Basemap") |>
+  addPolygons(
+    data = st_transform(poly, 4326),
+    fillColor = "#cccccc", fillOpacity = 0.25,
+    color = "#444444", weight = 2, group = "AOI"
+  ) |>
+  addCircleMarkers(
+    data = st_transform(pts_out, 4326),
+    radius = 5, color = "red", fillOpacity = 0.9,
+    label = ~PointID, popup = ~paste0("<b>", PointID, "</b>"),
+    group = "Validation plots"
+  ) |>
+  addLayersControl(
+    baseGroups = c("Basemap", "Imagery"),
+    overlayGroups = c("AOI", "Validation plots"),
+    options = layersControlOptions(collapsed = FALSE)
+  )
+
+saveWidget(leaf, file = normalizePath(html_path, mustWork = FALSE),
+           selfcontained = TRUE)
+leaf
+```
+
+## First 10 plot coordinates
+
+```{r table}
+kable(head(pts_table, 10), digits = 5,
+      caption = "Preview of random_points_45.csv")
+```
+
+## Outputs
+
+-   `demo/aoi.shp` / `demo/aoi.kmz` — Dummy AOI
+-   `demo/outputs/random_points_45.csv` — plot coordinates (Lon/Lat + EPSG:6933)
+-   `demo/outputs/random_points_45.shp` — point shapefile
+-   `demo/outputs/random_points_45.kml` — keymarkup language
+-   `demo/outputs/random_points_45_map.png` — static map
+-   `demo/outputs/random_points_45_map.html` — interactive map
+
+The interactive map is also embedded directly in this rendered HTML document.

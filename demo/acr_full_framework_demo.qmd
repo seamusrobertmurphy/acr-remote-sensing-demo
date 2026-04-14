@@ -1,0 +1,370 @@
+---
+title: "ACR Framework for Remotely Sensed Quantification of Forest Carbon"
+subtitle: "End-to-end pilot demonstration on a synthetic AOI"
+author: "TÜV SÜD America - Forestry Team"
+date: today
+format:
+  docx:
+    embed-resources: true
+    toc: true
+    toc-depth: 3
+    code-fold: show
+    code-tools: true
+execute:
+  warning: false
+  message: false
+editor: 
+  markdown: 
+    wrap: 100
+---
+
+## Objective
+
+A reproducible walk-through of ACR's Framework for Remotely Sensed Quantification of Forest Carbon
+([v1.0,
+2026](https://acrcarbon.org/program_resources/framework-for-remotely-sensed-quantification-of-forest-carbon/)),
+applied end-to-end to a synthetic \~5,000 ha forest AOI in the Oregon Cascades. Every numeric input
+is simulated; no real project data are used. The goal is to show how the Framework's four stages fit
+together and to exercise every equation (s.2.4 mean carbon density, s.3.3 Eq. 2, s.3.4 Eqs. 3–6).
+
+This report's sections follow the ACR Framework below:
+
+1.  s.1.4 Spatial scope: define the AOI.
+2.  s.2 Predictive Model: simulate a pixel raster of aboveground carbon density and a Calibration
+    Plot set used to fit it.
+3.  s.3.1 Validation plot generation: run the ACR random-point script.
+4.  s.3.2 Installation: simulate field measurement at each plot.
+5.  s.3.3 Model eligibility: pair plots with pixels; compute area-weighted average carbon density
+    per plot (Eq. 2).
+6.  s.3.4 Statistical agreement: RMSE, 90 % CI, uncertainty percentages (Eqs. 3–6); pass/fail the 20
+    %/10 % thresholds.
+7.  s.2.4 Mean AOI carbon density: summarize estimates.
+8.  s.4 Re-measurement prep: audit trail to next reporting period.
+
+```{r setup}
+library(sf)
+library(terra)
+library(ggplot2)
+library(dplyr)
+library(tibble)
+library(tidyr)
+library(readr)
+library(leaflet)
+library(htmlwidgets)
+library(knitr)
+
+set.seed(20260414)  
+
+output_dir <- "outputs_full"
+if (!dir.exists(output_dir)) dir.create(output_dir, recursive = TRUE)
+```
+
+## 1 Impot AOI
+
+Same synthetic Oregon Cascades polygon used in the validation-plot demo: an irregular \~5,000 ha
+tract centered near 44.5°N, 122.5°W. Built by perturbing a circle's radius with sinusoidal plus
+random noise so the boundary is non-convex and realistic.
+
+```{r aoi}
+centroid_lon <- -122.5
+centroid_lat <-   44.5
+target_ha    <- 5000
+
+km_per_deg_lat <- 111
+km_per_deg_lon <- 111 * cos(centroid_lat * pi / 180)
+target_radius_km <- sqrt(target_ha / 100 / pi)
+
+n_vert <- 120
+theta  <- seq(0, 2*pi, length.out = n_vert + 1)[-1]
+radius_km <- target_radius_km *
+  (1 + 0.25 * sin(3*theta) + 0.12 * cos(5*theta) +
+       runif(n_vert, -0.06, 0.06))
+
+lon <- centroid_lon + (radius_km * cos(theta)) / km_per_deg_lon
+lat <- centroid_lat + (radius_km * sin(theta)) / km_per_deg_lat
+coords <- rbind(cbind(lon, lat), c(lon[1], lat[1]))
+
+aoi <- st_sf(name = "Demo AOI",
+             geometry = st_sfc(st_polygon(list(coords)), crs = 4326)) |>
+  st_make_valid()
+
+aoi_ea <- st_transform(aoi, 6933)  # equal-area for all area computations
+aoi_area_ha <- as.numeric(st_area(aoi_ea)) / 1e4
+cat(sprintf("AOI area: %.1f ha\n", aoi_area_ha))
+```
+
+## 2 Predictive Model
+
+In a real project, a Predictive Model is trained on Calibration Plots (field-measured aboveground
+carbon) paired with remotely sensed covariates (Landsat/Sentinel/LiDAR/RADAR), then applied to every
+pixel across the AOI to produce a wall-to-wall map of predicted carbon density (t CO₂e / ha).
+
+For the demo, we skip the regression fit and instead simulate the output of such a model: a 30 m
+pixel raster of predicted aboveground carbon density over the AOI, with spatial autocorrelation to
+mimic forest structural variation.
+
+### 2.1 Simulate the pixel-level prediction raster
+
+```{r predictive-raster}
+# Use an equal-area CRS (EPSG:6933) so pixels are truly 30 m × 30 m
+aoi_vect <- vect(aoi_ea)
+r_template <- rast(ext(aoi_vect), resolution = 30, crs = crs(aoi_vect))
+
+# Coarse smooth field (low-freq sinusoid) + fine noise, clipped to AOI
+xy <- xyFromCell(r_template, 1:ncell(r_template))
+xn <- (xy[,1] - min(xy[,1])) / (max(xy[,1]) - min(xy[,1]))
+yn <- (xy[,2] - min(xy[,2])) / (max(xy[,2]) - min(xy[,2]))
+
+# Simulated AGC density in t CO2e / ha: mean ~ 350, sd ~ 70
+agc_vals <- 350 +
+  80 * sin(2*pi*xn*1.5) * cos(2*pi*yn*1.2) +
+  40 * sin(2*pi*xn*4.0 + 0.7) +
+  rnorm(length(xn), 0, 30)
+agc_vals <- pmax(agc_vals, 50)
+
+r_pred <- setValues(r_template, agc_vals)
+names(r_pred) <- "AGC_tCO2e_per_ha"
+r_pred <- mask(r_pred, aoi_vect)
+
+cat(sprintf("Pixels in AOI: %d (%.1f ha)\n",
+            global(!is.na(r_pred), "sum")[[1]],
+            global(!is.na(r_pred), "sum")[[1]] * 0.09))
+
+plot(r_pred, main = "Predicted aboveground carbon density (t CO2e / ha)")
+plot(aoi_vect, add = TRUE, border = "black", lwd = 1.2)
+```
+
+### 2.2 Calibration Plots
+
+In practice, a Project Proponent would install ≥ Calibration Plots to parameterize the model. Here
+we fabricate 60 Calibration Plots for narrative completeness only. Important to note that they play
+no statistical role in the eligibility test (s.3.3 forbids Validation Plots from being reused as
+Calibration Plots for the current reporting period).
+
+```{r calib-plots}
+n_cal <- 60
+cal_pts <- st_sample(aoi, size = n_cal, type = "random", exact = TRUE) |>
+  st_as_sf() |>
+  mutate(CalID = sprintf("C%02d", dplyr::row_number()))
+```
+
+## 3 Validation Plots
+
+### 3.1 Location generation 
+
+Inline reproduction of ACR
+[script](https://acrcarbon.org/wp-content/uploads/2026/03/ACR-Script-for-Validation-Plot-Location-Generation.r)
+`ACR-Script-for-Validation-Plot- Location-Generation.r`: equal-area sampling in EPSG:6933,
+`n_points = 45`, ACR-issued seed already set at top of document.
+
+```{r vp-locations}
+n_points <- 45
+poly_sampling <- st_transform(aoi, 6933)
+pts_geom <- st_sample(poly_sampling, size = n_points,
+                      type = "random", exact = TRUE)
+vp <- st_as_sf(pts_geom) |>
+  mutate(PointID = sprintf("P%02d", dplyr::row_number())) |>
+  st_transform(st_crs(aoi))
+
+vp_ea <- st_transform(vp, 6933)
+```
+
+### 3.2 Dummy field measurements
+
+Each Validation Plot is a circular plot of radius 17.84 m (0.1 ha = 1000 m², consistent with FIA
+subplot-style sampling). The observed aboveground carbon at each plot is the true underlying field
+sampled with realistic measurement noise and a small positive bias (simulating, for example, a
+predictive model that slightly under-predicts carbon in mature stands).
+
+```{r vp-measurement}
+plot_radius_m <- 17.84          # 0.1 ha circular plot
+vp_polys <- st_buffer(vp_ea, dist = plot_radius_m)
+
+# Predicted area-weighted average carbon density at each plot (s.3.3 Eq. 2)
+#   average pixel value weighted by overlap area with the plot
+ext_pred <- terra::extract(r_pred, vect(vp_polys),
+                           weights = TRUE, fun = NULL)
+pred_by_plot <- ext_pred |>
+  as_tibble() |>
+  group_by(ID) |>
+  summarise(C_pred = sum(AGC_tCO2e_per_ha * weight) / sum(weight),
+            .groups = "drop") |>
+  arrange(ID)
+
+# Simulate observation: truth is the model's prediction plus a realistic
+# deviation pattern. This is where a real field crew would walk in with
+# diameter tapes / allometric equations.
+obs_bias  <- 8     # t CO2e / ha (model under-predicts slightly on average)
+obs_noise <- 35    # plot-level residual sd
+
+plots_df <- tibble(
+  PointID  = vp$PointID,
+  C_pred   = pred_by_plot$C_pred,                         # Ĉ_AVE,AG,p,VP,i
+  C_obs    = pred_by_plot$C_pred + obs_bias +
+             rnorm(n_points, 0, obs_noise)                # C_AG,VP,i
+) |> mutate(residual = C_obs - C_pred)
+
+kable(head(plots_df, 10), digits = 1,
+      caption = "Predicted vs. observed carbon density (first 10 plots)")
+```
+
+```{r vp-scatter, fig.width=6, fig.height=5}
+ggplot(plots_df, aes(C_pred, C_obs)) +
+  geom_abline(slope = 1, intercept = 0, linetype = 2, color = "grey50") +
+  geom_point(color = "red3", size = 2) +
+  labs(x = "Predicted (t CO2e / ha)",
+       y = "Observed (t CO2e / ha)",
+       title = "Validation plot agreement",
+       subtitle = "Dashed = 1:1 line") +
+  theme_minimal()
+```
+
+### 3.3 Assessing model eligibility & equations
+
+ACR Framework s.3.3–3.4 defines four equations. We compute each explicitly.
+
+```{r eligibility}
+N   <- nrow(plots_df)
+C_obs_bar  <- mean(plots_df$C_obs)
+C_pred_bar <- mean(plots_df$C_pred)
+
+# Eq. 3 — Root Mean Squared Error
+RMSE <- sqrt(mean((plots_df$C_obs - plots_df$C_pred)^2))
+
+# Eq. 4 — Uncertainty percentage using RMSE  (threshold < 20%)
+UNC_RMSE <- (RMSE / C_obs_bar) * 100
+
+# Eq. 5 — 90% Confidence Interval
+CI90 <- (RMSE / sqrt(N)) * 1.645
+
+# Eq. 6 — Uncertainty percentage at 90% CI  (threshold <= 10%)
+UNC_CI <- (CI90 / C_obs_bar) * 100
+
+tibble(
+  Metric = c("N plots","Mean observed C (t CO2e/ha)",
+             "Mean predicted C (t CO2e/ha)",
+             "RMSE (Eq. 3)","UNC_RMSE % (Eq. 4)",
+             "90% CI (Eq. 5)","UNC_CI % (Eq. 6)"),
+  Value  = c(N, C_obs_bar, C_pred_bar, RMSE, UNC_RMSE, CI90, UNC_CI)
+) |> kable(digits = 2, caption = "Eligibility statistics")
+```
+
+### 3.4 Statistical agreement 
+
+Framework s.3.4: the Predictive Model is eligible when UNC_RMSE \< 20 % and UNC_CI ≤ 10 %.
+
+```{r decision}
+pass_rmse <- UNC_RMSE <  20
+pass_ci   <- UNC_CI   <= 10
+eligible  <- pass_rmse && pass_ci
+
+tibble(
+  Test      = c("UNC_RMSE < 20%", "UNC_CI <= 10%", "Overall eligibility"),
+  Observed  = c(sprintf("%.2f%%", UNC_RMSE),
+                sprintf("%.2f%%", UNC_CI),
+                ifelse(eligible, "PASS", "FAIL")),
+  Threshold = c("< 20%", "<= 10%", "both required"),
+  Result    = c(ifelse(pass_rmse,"PASS","FAIL"),
+                ifelse(pass_ci,  "PASS","FAIL"),
+                ifelse(eligible, "ELIGIBLE","NOT ELIGIBLE"))
+) |> kable(caption = "ACR s.3.4 agreement test")
+```
+
+If the test fails, s.3.4 allows the Project Proponent either to install additional Validation Plots
+from the same sequence (pending ACR approval) or to discontinue and request a fresh seed to restart
+s.3.
+
+## 4 AOI-level mean carbon density 
+
+The pixel raster gives the Framework's primary deliverable: AOI-level mean aboveground carbon
+density (used for crediting once the model is approved).
+
+```{r aoi-mean}
+mean_C <- global(r_pred, "mean", na.rm = TRUE)[[1]]
+total_C <- mean_C * aoi_area_ha   # t CO2e across the whole AOI
+
+tibble(
+  Quantity = c("AOI area (ha)",
+               "Mean AGC density (t CO2e / ha)",
+               "Total AGC stock (t CO2e)"),
+  Value    = c(aoi_area_ha, mean_C, total_C)
+) |> kable(digits = 1, caption = "AOI-level roll-up (s.2.4)")
+```
+
+## 5 Interactive map
+
+AOI outline, predictive raster thumbnail, Calibration Plots (blue), Validation Plot centers (red).
+
+```{r leaflet}
+# Raster to WGS84 for web display (build a target template explicitly
+# because auto-projection from an equal-area CRS occasionally fails to
+# infer output extent)
+aoi_wgs_vect <- vect(aoi)
+r_tmpl_wgs <- rast(aoi_wgs_vect, resolution = 0.0005)
+crs(r_tmpl_wgs) <- "EPSG:4326"
+r_wgs <- project(r_pred, r_tmpl_wgs, method = "bilinear")
+pal <- colorNumeric("YlGn", values(r_wgs), na.color = "transparent")
+
+leaf <- leaflet() |>
+  addProviderTiles(providers$Esri.WorldImagery, group = "Imagery") |>
+  addProviderTiles(providers$CartoDB.Positron,  group = "Basemap") |>
+  addRasterImage(r_wgs, colors = pal, opacity = 0.7,
+                 group = "Predicted AGC") |>
+  addPolygons(data = aoi, fill = FALSE, color = "#222",
+              weight = 2, group = "AOI") |>
+  addCircleMarkers(data = st_transform(cal_pts, 4326),
+                   radius = 3, color = "blue", fillOpacity = 0.8,
+                   label = ~CalID, group = "Calibration plots") |>
+  addCircleMarkers(data = st_transform(vp, 4326),
+                   radius = 5, color = "red", fillOpacity = 0.9,
+                   label = ~PointID, group = "Validation plots") |>
+  addLegend(pal = pal, values = values(r_wgs),
+            title = "AGC (t CO2e/ha)", opacity = 0.8) |>
+  addLayersControl(
+    baseGroups = c("Basemap","Imagery"),
+    overlayGroups = c("AOI","Predicted AGC",
+                      "Calibration plots","Validation plots"),
+    options = layersControlOptions(collapsed = FALSE)
+  ) |>
+  hideGroup("Calibration plots")
+
+html_path <- file.path(output_dir, "full_framework_map.html")
+saveWidget(leaf, file = normalizePath(html_path, mustWork = FALSE),
+           selfcontained = TRUE)
+leaf
+```
+
+## 6 Re-measurements   
+
+Once the Predictive Model is deemed eligible, s.4 of the Framework kicks in at the next reporting
+period: the VVB may remeasure a subset of the existing Validation Plots to confirm stability, or the
+Project Proponent may request a new seed to draw a fresh sequence if conditions in the AOI have
+changed materially (disturbance, harvest, regrowth). The same script and the same 20 %/10 %
+thresholds apply.
+
+## 7 Exports
+
+```{r exports}
+write_csv(plots_df, file.path(output_dir, "validation_plots_eligibility.csv"))
+writeRaster(r_pred, file.path(output_dir, "predicted_agc.tif"),
+            overwrite = TRUE)
+suppressWarnings(st_write(vp, file.path(output_dir, "validation_points.shp"),
+                          delete_layer = TRUE, quiet = TRUE))
+suppressWarnings(st_write(cal_pts,
+                          file.path(output_dir, "calibration_points.shp"),
+                          delete_layer = TRUE, quiet = TRUE))
+```
+
+-   `outputs_full/predicted_agc.tif` — simulated pixel prediction raster
+-   `outputs_full/validation_points.shp` — 45 plot centers
+-   `outputs_full/calibration_points.shp` — 60 simulated calibration plots
+-   `outputs_full/validation_plots_eligibility.csv` — predicted vs. observed
+-   `outputs_full/full_framework_map.html` — standalone interactive map
+
+#### Notes
+
+The Predictive Model here is a hand-crafted spatial field, not a fitted regression on real
+covariates; the observation process is Gaussian noise plus a constant bias rather than real
+allometric error; and the Calibration Plots are decorative. Everything downstream of the raster,
+including the ACR script, the equal-area sampling, the plot-pixel overlap, the RMSE and CI
+computations, the s.3.4 decision, demostrates a typical project runtime.

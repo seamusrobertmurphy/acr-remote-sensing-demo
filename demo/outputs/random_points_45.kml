@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+<Document id="root_doc">
+<Schema name="random_points_45" id="random_points_45">
+	<SimpleField name="PointID" type="string"></SimpleField>
+</Schema>
+<Folder><name>random_points_45</name>
+  <Placemark>
+	<ExtendedData><SchemaData schemaUrl="#random_points_45">
+		<SimpleData name="PointID">P01</SimpleData>
+	</SchemaData></ExtendedData>
+      <Point><coordinates>-122.463745017834,44.49173981845</coordinates></Point>
+  </Placemark>
+  <Placemark>
+	<ExtendedData><SchemaData schemaUrl="#random_points_45">
+		<SimpleData name="PointID">P02</SimpleData>
+	</SchemaData></ExtendedData>
+      <Point><coordinates>-122.536314504043,44.5024363820758</coordinates></Point>
+  </Placemark>
+  <Placemark>
+	<ExtendedData><SchemaData schemaUrl="#random_points_45">
+		<SimpleData name="PointID">P03</SimpleData>
+	</SchemaData></ExtendedData>
+      <Point><coordinates>-122.507768227401,44.4754622869414</coordinates></Point>
+  </Placemark>
+  <Placemark>
+	<ExtendedData><SchemaData schemaUrl="#random_points_45">
+		<SimpleData name="PointID">P04</SimpleData>
+	</SchemaData></ExtendedData>
+      <Point><coordinates>-122.490233795492,44.4909850655546</coordinates></Point>
+  </Placemark>
+  <Placemark>
+	<ExtendedData><SchemaData schemaUrl="#random_points_45">
+		<SimpleData name="PointID">P05</SimpleData>
+	</SchemaData></ExtendedData>
+      <Point><coordinates>-122.479565044247,44.4619935737913</coordinates></Point>
+  </Placemark>
+  <Placemark>
+	<ExtendedData><SchemaData schemaUrl="#random_points_45">
+		<SimpleData name="PointID">P06</SimpleData>
+	</SchemaData></ExtendedData>
+      <Point><coordinates>-122.476975009729,44.4856502409051</coordinates></Point>
+  </Placemark>
+  <Placemark>
+	<ExtendedData><SchemaData schemaUrl="#random_points_45">
+		<SimpleData name="PointID">P07</SimpleData>
+	</SchemaData></ExtendedData>
+      <Point><coordinates>-122.444337463471,44.5116773700841</coordinates></Point>
+  </Placemark>
+  <Placemark>
+	<ExtendedData><SchemaData schemaUrl="#random_points_45">
+		<SimpleData name="PointID">P08</SimpleData>
+	</SchemaData></ExtendedData>
+      <Point><coordinates>-122.529631666202,44.4911443504738</coordinates></Point>
+  </Placemark>
+  <Placemark>
+	<ExtendedData><SchemaData schemaUrl="#random_points_45">
+		<SimpleData name="PointID">P09</SimpleData>
+	</SchemaData></ExtendedData>
+      <Point><coordinates>-122.460054148868,44.5207264729869</coordinates></Point>
+  </Placemark>
+  <Placemark>
+	<ExtendedData><SchemaData schemaUrl="#random_points_45">
+		<SimpleData name="PointID">P10</SimpleData>
+	</SchemaData></ExtendedData>
+      <Point><coordinates>-122.502496793661,44.5216595941428</coordinates></Point>
+  </Placemark>
+  <Placemark>
+	<ExtendedData><SchemaData schemaUrl="#random_points_45">
+		<SimpleData name="PointID">P11</SimpleData>
+	</SchemaData></ExtendedData>
+      <Point><coordinates>-122.553287990441,44.5255396518341</coordinates></Point>
+  </Placemark>
+  <Placemark>
+	<ExtendedData><SchemaData schemaUrl="#random_points_45">
+		<SimpleData name="PointID">P12</SimpleData>
+	</SchemaData></ExtendedData>
+      <Point><coordinates>-122.54344054626,44.5153520650132</coordinates></Point>
+  </Placemark>
+  <Placemark>
+	<ExtendedData><SchemaData schemaUrl="#random_points_45">
+		<SimpleData name="PointID">P13</SimpleData>
+	</SchemaData></ExtendedData>
+      <Point><coordinates>-122.537985103777,44.4844747331546</coordinates></Point>
+  </Placemark>
+  <Placemark>
+	<ExtendedData><SchemaData schemaUrl="#random_points_45">
+		<SimpleData name="PointID">P14</SimpleData>
+	</SchemaData></ExtendedData>
+      <Point><coordinates>-122.479213962909,44.483689350071</coordinates></Point>
+  </Placemark>
+  <Placemark>
+	<ExtendedData><SchemaData schemaUrl="#random_points_45">
+		<SimpleData name="PointID">P15</SimpleData>
+	</SchemaData></ExtendedData>
+      <Point><coordinates>-122.474806265398,44.491978147317</coordinates></Point>
+  </Placemark>
+  <Placemark>
+	<ExtendedData><SchemaData schemaUrl="#random_points_45">
+		<SimpleData name="PointID">P16</SimpleData>
+	</SchemaData></ExtendedData>
+      <Point><coordinates>-122.454208443107,44.4945459229863</coordinates></Point>
+  </Placemark>
+  <Placemark>
+	<ExtendedData><SchemaData schemaUrl="#random_points_45">
+		<SimpleData name="PointID">P17</SimpleData>
+	</SchemaData></ExtendedData>
+      <Point><coordinates>-122.491711777128,44.4544150891563</coordinates></Point>
+  </Placemark>
+  <Placemark>
+	<ExtendedData><SchemaData schemaUrl="#random_points_45">
+		<SimpleData name="PointID">P18</SimpleData>
+	</SchemaData></ExtendedData>
+      <Point><coordinates>-122.460269622714,44.5134327278203</coordinates></Point>
+  </Placemark>
+  <Placemark>
+	<ExtendedData><SchemaData schemaUrl="#random_points_45">
+		<SimpleData name="PointID">P19</SimpleData>
+	</SchemaData></ExtendedData>
+      <Point><coordinates>-122.50265417089,44.4939498898489</coordinates></Point>
+  </Placemark>
+  <Placemark>
+	<ExtendedData><SchemaData schemaUrl="#random_points_45">
+		<SimpleData name="PointID">P20</SimpleData>
+	</SchemaData></ExtendedData>
+      <Point><coordinates>-122.524951483614,44.5267240654746</coordinates></Point>
+  </Placemark>
+  <Placemark>
+	<ExtendedData><SchemaData schemaUrl="#random_points_45">
+		<SimpleData name="PointID">P21</SimpleData>
+	</SchemaData></ExtendedData>
+      <Point><coordinates>-122.479193636363,44.4651798156073</coordinates></Point>
+  </Placemark>
+  <Placemark>
+	<ExtendedData><SchemaData schemaUrl="#random_points_45">
+		<SimpleData name="PointID">P22</SimpleData>
+	</SchemaData></ExtendedData>
+      <Point><coordinates>-122.479135318828,44.5034697190983</coordinates></Point>
+  </Placemark>
+  <Placemark>
+	<ExtendedData><SchemaData schemaUrl="#random_points_45">
+		<SimpleData name="PointID">P23</SimpleData>
+	</SchemaData></ExtendedData>
+      <Point><coordinates>-122.46870534712,44.5036898436904</coordinates></Point>
+  </Placemark>
+  <Placemark>
+	<ExtendedData><SchemaData schemaUrl="#random_points_45">
+		<SimpleData name="PointID">P24</SimpleData>
+	</SchemaData></ExtendedData>
+      <Point><coordinates>-122.496561306458,44.5120487897873</coordinates></Point>
+  </Placemark>
+  <Placemark>
+	<ExtendedData><SchemaData schemaUrl="#random_points_45">
+		<SimpleData name="PointID">P25</SimpleData>
+	</SchemaData></ExtendedData>
+      <Point><coordinates>-122.483657367873,44.4877711248818</coordinates></Point>
+  </Placemark>
+  <Placemark>
+	<ExtendedData><SchemaData schemaUrl="#random_points_45">
+		<SimpleData name="PointID">P26</SimpleData>
+	</SchemaData></ExtendedData>
+      <Point><coordinates>-122.517472365941,44.4786903011459</coordinates></Point>
+  </Placemark>
+  <Placemark>
+	<ExtendedData><SchemaData schemaUrl="#random_points_45">
+		<SimpleData name="PointID">P27</SimpleData>
+	</SchemaData></ExtendedData>
+      <Point><coordinates>-122.513550651042,44.518180219915</coordinates></Point>
+  </Placemark>
+  <Placemark>
+	<ExtendedData><SchemaData schemaUrl="#random_points_45">
+		<SimpleData name="PointID">P28</SimpleData>
+	</SchemaData></ExtendedData>
+      <Point><coordinates>-122.550385355341,44.5296029346464</coordinates></Point>
+  </Placemark>
+  <Placemark>
+	<ExtendedData><SchemaData schemaUrl="#random_points_45">
+		<SimpleData name="PointID">P29</SimpleData>
+	</SchemaData></ExtendedData>
+      <Point><coordinates>-122.502990693632,44.4874091371515</coordinates></Point>
+  </Placemark>
+  <Placemark>
+	<ExtendedData><SchemaData schemaUrl="#random_points_45">
+		<SimpleData name="PointID">P30</SimpleData>
+	</SchemaData></ExtendedData>
+      <Point><coordinates>-122.521705189106,44.4844627460671</coordinates></Point>
+  </Placemark>
+  <Placemark>
+	<ExtendedData><SchemaData schemaUrl="#random_points_45">
+		<SimpleData name="PointID">P31</SimpleData>
+	</SchemaData></ExtendedData>
+      <Point><coordinates>-122.526435128631,44.4982608759449</coordinates></Point>
+  </Placemark>
+  <Placemark>
+	<ExtendedData><SchemaData schemaUrl="#random_points_45">
+		<SimpleData name="PointID">P32</SimpleData>
+	</SchemaData></ExtendedData>
+      <Point><coordinates>-122.521924118578,44.5112093943366</coordinates></Point>
+  </Placemark>
+  <Placemark>
+	<ExtendedData><SchemaData schemaUrl="#random_points_45">
+		<SimpleData name="PointID">P33</SimpleData>
+	</SchemaData></ExtendedData>
+      <Point><coordinates>-122.471920885419,44.5069677626134</coordinates></Point>
+  </Placemark>
+  <Placemark>
+	<ExtendedData><SchemaData schemaUrl="#random_points_45">
+		<SimpleData name="PointID">P34</SimpleData>
+	</SchemaData></ExtendedData>
+      <Point><coordinates>-122.549508216393,44.5134545950257</coordinates></Point>
+  </Placemark>
+  <Placemark>
+	<ExtendedData><SchemaData schemaUrl="#random_points_45">
+		<SimpleData name="PointID">P35</SimpleData>
+	</SchemaData></ExtendedData>
+      <Point><coordinates>-122.500932597693,44.4806531496953</coordinates></Point>
+  </Placemark>
+  <Placemark>
+	<ExtendedData><SchemaData schemaUrl="#random_points_45">
+		<SimpleData name="PointID">P36</SimpleData>
+	</SchemaData></ExtendedData>
+      <Point><coordinates>-122.545931080216,44.5065705649627</coordinates></Point>
+  </Placemark>
+  <Placemark>
+	<ExtendedData><SchemaData schemaUrl="#random_points_45">
+		<SimpleData name="PointID">P37</SimpleData>
+	</SchemaData></ExtendedData>
+      <Point><coordinates>-122.485726040972,44.5125309493891</coordinates></Point>
+  </Placemark>
+  <Placemark>
+	<ExtendedData><SchemaData schemaUrl="#random_points_45">
+		<SimpleData name="PointID">P38</SimpleData>
+	</SchemaData></ExtendedData>
+      <Point><coordinates>-122.502393387729,44.4892816329427</coordinates></Point>
+  </Placemark>
+  <Placemark>
+	<ExtendedData><SchemaData schemaUrl="#random_points_45">
+		<SimpleData name="PointID">P39</SimpleData>
+	</SchemaData></ExtendedData>
+      <Point><coordinates>-122.526699319144,44.5262075461519</coordinates></Point>
+  </Placemark>
+  <Placemark>
+	<ExtendedData><SchemaData schemaUrl="#random_points_45">
+		<SimpleData name="PointID">P40</SimpleData>
+	</SchemaData></ExtendedData>
+      <Point><coordinates>-122.504691667393,44.4734880539213</coordinates></Point>
+  </Placemark>
+  <Placemark>
+	<ExtendedData><SchemaData schemaUrl="#random_points_45">
+		<SimpleData name="PointID">P41</SimpleData>
+	</SchemaData></ExtendedData>
+      <Point><coordinates>-122.471401268725,44.4904295390129</coordinates></Point>
+  </Placemark>
+  <Placemark>
+	<ExtendedData><SchemaData schemaUrl="#random_points_45">
+		<SimpleData name="PointID">P42</SimpleData>
+	</SchemaData></ExtendedData>
+      <Point><coordinates>-122.495902624368,44.5269801815793</coordinates></Point>
+  </Placemark>
+  <Placemark>
+	<ExtendedData><SchemaData schemaUrl="#random_points_45">
+		<SimpleData name="PointID">P43</SimpleData>
+	</SchemaData></ExtendedData>
+      <Point><coordinates>-122.528770643595,44.5216948889361</coordinates></Point>
+  </Placemark>
+  <Placemark>
+	<ExtendedData><SchemaData schemaUrl="#random_points_45">
+		<SimpleData name="PointID">P44</SimpleData>
+	</SchemaData></ExtendedData>
+      <Point><coordinates>-122.526427162372,44.5238658203643</coordinates></Point>
+  </Placemark>
+  <Placemark>
+	<ExtendedData><SchemaData schemaUrl="#random_points_45">
+		<SimpleData name="PointID">P45</SimpleData>
+	</SchemaData></ExtendedData>
+      <Point><coordinates>-122.509836951192,44.4795602527425</coordinates></Point>
+  </Placemark>
+</Folder>
+</Document></kml>
