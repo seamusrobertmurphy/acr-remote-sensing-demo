@@ -150,7 +150,7 @@ cal_pts <- st_sample(aoi, size = n_cal, type = "random", exact = TRUE) |>
 
 ## 3 Validation Plots
 
-### 3.1 Location generation 
+### 3.1 Location generation
 
 Inline reproduction of ACR
 [script](https://acrcarbon.org/wp-content/uploads/2026/03/ACR-Script-for-Validation-Plot-Location-Generation.r)
@@ -249,7 +249,7 @@ tibble(
 ) |> kable(digits = 2, caption = "Eligibility statistics")
 ```
 
-### 3.4 Statistical agreement 
+### 3.4 Statistical agreement
 
 Framework s.3.4: the Predictive Model is eligible when UNC_RMSE \< 20 % and UNC_CI ≤ 10 %.
 
@@ -274,7 +274,7 @@ If the test fails, s.3.4 allows the Project Proponent either to install addition
 from the same sequence (pending ACR approval) or to discontinue and request a fresh seed to restart
 s.3.
 
-## 4 AOI-level mean carbon density 
+## 4 AOI-level mean carbon density
 
 The pixel raster gives the Framework's primary deliverable: AOI-level mean aboveground carbon
 density (used for crediting once the model is approved).
@@ -334,7 +334,7 @@ saveWidget(leaf, file = normalizePath(html_path, mustWork = FALSE),
 leaf
 ```
 
-## 6 Re-measurements   
+## 6 Re-measurements
 
 Once the Predictive Model is deemed eligible, s.4 of the Framework kicks in at the next reporting
 period: the VVB may remeasure a subset of the existing Validation Plots to confirm stability, or the
